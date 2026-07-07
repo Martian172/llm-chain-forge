@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.env
+.venv
+venv/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+.vscode/
+.idea/
+.chainforge_cache/

@@ -1,0 +1,24 @@
+name: summarization-chain
+description: Summarize text in multiple steps
+
+links:
+  - name: extract-key-points
+    prompt: |
+      Extract the 5 most important points from this text:
+
+      {{input}}
+
+      Key points:
+    model: gpt-4o-mini
+    temperature: 0.3
+    max_tokens: 500
+
+  - name: write-summary
+    prompt: |
+      Using these key points:
+      {{extract-key-points.output}}
+
+      Write a concise 2-3 sentence summary:
+    model: gpt-4o-mini
+    temperature: 0.5
+    max_tokens: 200
