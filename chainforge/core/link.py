@@ -329,9 +329,18 @@ class Link:
         provider_name = data.get("provider")
         provider = providers_map.get(provider_name) if provider_name else None
 
+        # YAML chains use the short "prompt" key; to_dict() emits
+        # "prompt_template" — accept both.
+        template = data.get("prompt_template") or data.get("prompt")
+        if template is None:
+            raise KeyError(
+                f"Link '{data.get('name', '?')}' has no 'prompt' or "
+                "'prompt_template' key"
+            )
+
         return cls(
             name=data["name"],
-            prompt_template=PromptTemplate(data["prompt_template"]),
+            prompt_template=PromptTemplate(template),
             provider=provider,
             model=data.get("model"),
             temperature=data.get("temperature", 0.7),
