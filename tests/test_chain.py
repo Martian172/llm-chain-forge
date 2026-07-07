@@ -7,7 +7,7 @@ from chainforge.providers.mock_provider import MockProvider
 
 @pytest.fixture
 def mock_provider():
-    return MockProvider(response_template="Processed: {prompt}")
+    return MockProvider(response_fn=lambda prompt: f"Processed: {prompt}")
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ class TestChain:
         result = simple_chain.run({"name": "Bob"})
         assert hasattr(result, "token_usage")
         assert hasattr(result, "latency_ms")
-        assert hasattr(result, "cost")
+        assert hasattr(result, "cost_usd")
 
     def test_chain_visualization(self, simple_chain):
         # Should not raise

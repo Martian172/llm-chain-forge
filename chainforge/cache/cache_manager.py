@@ -57,7 +57,7 @@ class InMemoryCache(BaseCache):
             # Evict oldest entry
             oldest = next(iter(self._store))
             del self._store[oldest]
-        expires_at = time.time() + ttl if ttl else None
+        expires_at = time.time() + ttl if ttl is not None else None
         self._store[key] = (value, expires_at)
 
     def delete(self, key: str) -> None:
@@ -94,7 +94,7 @@ class DiskCache(BaseCache):
             return None
 
     def set(self, key: str, value: Any, ttl: int | None = None) -> None:
-        data = {"value": value, "expires_at": time.time() + ttl if ttl else None}
+        data = {"value": value, "expires_at": time.time() + ttl if ttl is not None else None}
         self._path(key).write_text(json.dumps(data))
 
     def delete(self, key: str) -> None:

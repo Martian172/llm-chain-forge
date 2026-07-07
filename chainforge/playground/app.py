@@ -51,12 +51,12 @@ async def run_chain(req: ChainRunRequest):
                 prompt_template=link_cfg.get("prompt", "{{input}}"),
                 provider=provider,
             ))
-        result = chain.run(req.input)
+        result = await chain.run_async(req.input)
         return {
             "output": result.output,
-            "token_usage": result.token_usage,
+            "token_usage": result.token_usage.to_dict(),
             "latency_ms": result.latency_ms,
-            "cost_usd": result.cost,
+            "cost_usd": result.cost_usd,
         }
     except Exception as e:
         return {"error": str(e)}

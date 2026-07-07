@@ -40,12 +40,18 @@ class PromptTemplate:
         """
         self.template = template.strip()
         self.name = name
-        self._variable_pattern = re.compile(r"\{([^}]+)\}")
+        # Both {{var}} (documented syntax) and {var} (legacy) are supported.
+        self._double_brace_pattern = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
+        self._single_brace_pattern = re.compile(r"\{([^{}]+)\}")
 
     @property
     def variables(self) -> list[str]:
         """Extract all variable names from the template."""
-        return self._variable_pattern.findall(self.template)
+        found = self._double_brace_pattern.findall(self.template)
+        # Scan for single-brace vars only outside double-brace regions
+        stripped = self._double_brace_pattern.sub("", self.template)
+        found += self._single_brace_pattern.findall(stripped)
+        return found
 
     def render(self, context: dict[str, Any]) -> str:
         """
@@ -60,13 +66,13 @@ class PromptTemplate:
         Raises:
             KeyError: If a required variable is missing from context.
         """
-        rendered = self.template
-        for var in self.variables:
-            if var in context:
-                rendered = rendered.replace(f"{{{var}}}", str(context[var]))
-            else:
-                # Leave unreplaced variables as-is (warn but don't fail)
-                pass
+        def _substitute(match: "re.Match[str]") -> str:
+            var = match.group(1)
+            # Leave unreplaced variables as-is (warn but don't fail)
+            return str(context[var]) if var in context else match.group(0)
+
+        rendered = self._double_brace_pattern.sub(_substitute, self.template)
+        rendered = self._single_brace_pattern.sub(_substitute, rendered)
         return rendered
 
     def validate(self, context: dict[str, Any]) -> list[str]:
