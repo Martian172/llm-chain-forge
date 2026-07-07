@@ -68,11 +68,15 @@ class Evaluator:
             try:
                 chain_result = chain.run(tc.input)
                 actual = chain_result.output if hasattr(chain_result, "output") else str(chain_result)
-                token_usage = getattr(chain_result, "token_usage", {"prompt": 0, "completion": 0})
-                cost = getattr(chain_result, "cost", 0.0)
+                token_usage = getattr(chain_result, "token_usage", None)
+                if hasattr(token_usage, "to_dict"):
+                    token_usage = token_usage.to_dict()
+                elif token_usage is None:
+                    token_usage = {"prompt_tokens": 0, "completion_tokens": 0}
+                cost = getattr(chain_result, "cost_usd", 0.0)
             except Exception as e:
                 actual = f"ERROR: {e}"
-                token_usage = {"prompt": 0, "completion": 0}
+                token_usage = {"prompt_tokens": 0, "completion_tokens": 0}
                 cost = 0.0
 
             latency = (time.time() - start) * 1000
@@ -91,7 +95,7 @@ class Evaluator:
             total_latency += latency
 
         exact_rate = sum(r.exact_match for r in results) / max(len(results), 1)
-        avg_tokens = sum(r.token_usage.get("completion", 0) for r in results) / max(len(results), 1)
+        avg_tokens = sum(r.token_usage.get("completion_tokens", 0) for r in results) / max(len(results), 1)
 
         metrics = {
             "exact_match": exact_rate,

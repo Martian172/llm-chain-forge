@@ -1,0 +1,3 @@
+{"id": "tc-1", "input": {"input": "Python is a high-level programming language known for readability."}, "expected_output": "Python is a readable high-level programming language.", "metadata": {"difficulty": "easy"}}
+{"id": "tc-2", "input": {"input": "Docker packages applications and their dependencies into containers."}, "expected_output": "Docker containerizes applications with their dependencies.", "metadata": {"difficulty": "easy"}}
+{"id": "tc-3", "input": {"input": "Transformers use self-attention to weigh the relevance of each token to every other token."}, "expected_output": "Transformers rely on self-attention to relate tokens to each other.", "metadata": {"difficulty": "medium"}}

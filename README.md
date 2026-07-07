@@ -418,15 +418,16 @@ llm-chain-forge/
 ## 🛠️ CLI Usage
 
 ```bash
-# Run a chain from YAML
+# Run a chain from YAML (uses the mock provider by default; pass
+# --provider openai / anthropic to call a real LLM)
 forge run examples/chains/summarization.yaml \
-    --input '{"text": "Your document here..."}'
+    --input '{"input": "Your document here..."}'
 
-# Evaluate a chain
-forge eval examples/chains/summarization.yaml tests/test_cases.json
+# Evaluate a chain against test cases
+forge eval examples/chains/summarization.yaml examples/test_cases.jsonl
 
-# A/B test two chains
-forge compare chain_a.yaml chain_b.yaml --samples 100
+# A/B test two chains on the same test cases
+forge compare chain_a.yaml chain_b.yaml examples/test_cases.jsonl
 
 # Launch playground
 forge playground --port 8000
