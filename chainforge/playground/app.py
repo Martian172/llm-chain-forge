@@ -86,3 +86,16 @@ async def ws_run(ws: WebSocket):
     except WebSocketDisconnect:
         if ws in _clients:
             _clients.remove(ws)
+
+
+if __name__ == "__main__":
+    # Allows launching the playground directly (e.g. VS Code Run button):
+    #   python chainforge/playground/app.py
+    import os
+
+    import uvicorn
+
+    host = os.environ.get("FORGE_HOST", "127.0.0.1")
+    port = int(os.environ.get("FORGE_PORT", "8003"))
+    print(f"LLM Chain Forge playground: http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port)
