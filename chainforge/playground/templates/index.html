@@ -75,8 +75,12 @@
     ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 
     @media (max-width: 900px) {
-      .workspace { grid-template-columns: 1fr; }
-      .sidebar, .output-panel { display: none; }
+      /* Stack panels vertically instead of hiding them so the output
+         (result, tokens, cost, latency) is always visible on narrow windows. */
+      .workspace { grid-template-columns: 1fr; grid-auto-rows: minmax(0, auto); overflow-y: auto; }
+      .sidebar { display: none; }
+      .output-panel { border-left: none; border-top: 2px solid var(--accent2); min-height: 240px; }
+      .editor-container { min-height: 260px; }
     }
   </style>
 </head>
