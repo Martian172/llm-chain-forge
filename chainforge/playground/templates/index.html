@@ -172,6 +172,14 @@ Summary:</textarea>
 </div>
 
 <script>
+  // Resolve the API base. When the page is served by the app itself
+  // (http://127.0.0.1:8003) relative URLs work; when it is opened as a file
+  // or inside an editor preview pane there is no origin, so fall back to the
+  // default local server. CORS is enabled server-side to allow this.
+  const API_BASE = (location.protocol === 'http:' || location.protocol === 'https:')
+    ? ''
+    : 'http://127.0.0.1:8003';
+
   // CodeMirror editor
   const cm = CodeMirror.fromTextArea(document.getElementById('prompt-editor'), {
     mode: 'javascript', theme: 'default', lineNumbers: true, lineWrapping: true,
@@ -223,7 +231,7 @@ Summary:</textarea>
 
     try {
       const start = Date.now();
-      const resp = await fetch('/api/run', {
+      const resp = await fetch(API_BASE + '/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
