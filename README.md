@@ -320,29 +320,29 @@ print(report.cost_savings)    # "Chain B saves 34% on cost"
 
 ## 🎮 Web Playground
 
-Launch the beautiful interactive playground:
+Launch the interactive playground:
 
 ```bash
-forge playground
-# Opens http://localhost:8000
-```
-
-Or programmatically:
-
-```python
-from chainforge.playground import launch
-
-launch(chain=my_chain, port=8000)
+python chainforge/playground/app.py
+# or: forge playground --port 8003
+# Opens http://127.0.0.1:8003
 ```
 
 **Playground features:**
-- 🎨 Dark purple/blue theme with neon accents
-- ✏️ Monaco code editor with syntax highlighting
-- 🔗 Visual chain builder with drag-and-drop
-- 📊 Real-time token usage and cost tracking
-- 🔄 Side-by-side A/B comparison view
-- 📈 Evaluation dashboard with charts
-- 💾 Chain save/load from browser
+- 🔗 **Multi-step chain builder** — add/rename/remove steps; chain them with
+  `{{step_name.output}}` references
+- ⚡ **Live streaming execution** — per-step trace cards fill in over a
+  WebSocket as each link runs (output, latency, tokens, cost per step)
+- ⚖️ **Compare Prompts** — run two prompt variants on the same input N times;
+  side-by-side outputs, accuracy/tokens/latency/cost table, winner verdict,
+  and a Mann-Whitney U p-value with 5+ scored runs
+- 🔌 **Real provider selection** — dropdown reflects configured API keys
+  (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY`); the free offline mock provider
+  echoes each step's rendered prompt so you can verify templating
+- 📝 **Input Variables tab** — a JSON object that actually feeds the run
+- 💾 **Saved chains** — persisted to disk across restarts
+
+See [docs/playground.md](docs/playground.md) for the full API reference.
 
 ---
 

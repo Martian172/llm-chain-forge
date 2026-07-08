@@ -1,273 +1,544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LLM Chain Forge — Playground</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-  <style>
-    :root {
-      --bg: #0d0d1a; --surface: #12121f; --surface2: #1a1a2e;
-      --border: #252540; --accent: #7c3aed; --accent2: #a855f7;
-      --neon: #c026d3; --cyan: #06b6d4; --green: #10b981;
-      --text: #e2e8f0; --muted: #64748b; --radius: 14px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Chain Forge — Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0e14; --surface: #11151f; --surface2: #171c29; --border: #232a3b;
+    --text: #d5dbe7; --muted: #7d8799; --accent: #8b5cf6; --accent2: #a78bfa;
+    --green: #34d399; --red: #f87171; --yellow: #fbbf24; --cyan: #22d3ee;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow: hidden;
+  }
+  code, .mono, .CodeMirror, textarea { font-family: 'Cascadia Code', 'JetBrains Mono', Consolas, monospace; }
 
-    /* Navbar */
-    nav { display:flex; align-items:center; justify-content:space-between; padding:0 1.5rem; height:56px; background:var(--surface); border-bottom:1px solid var(--border); flex-shrink:0; }
-    .logo { display:flex; align-items:center; gap:0.6rem; font-weight:700; font-size:1rem; }
-    .logo span { background: linear-gradient(135deg, var(--accent2), var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .nav-controls { display:flex; align-items:center; gap:0.75rem; }
-    select { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:0.35rem 0.75rem; border-radius:8px; font-size:0.8rem; outline:none; cursor:pointer; }
-    .run-btn { background:linear-gradient(135deg, var(--accent), var(--neon)); border:none; color:#fff; font-weight:700; padding:0.45rem 1.2rem; border-radius:9px; cursor:pointer; font-size:0.85rem; transition:opacity 0.2s, transform 0.1s; display:flex; align-items:center; gap:0.4rem; }
-    .run-btn:hover { opacity:0.9; transform:scale(1.03); }
-    .run-btn:active { transform:scale(0.97); }
+  /* ===== Header ===== */
+  header {
+    display: flex; align-items: center; gap: 0.9rem; padding: 0.6rem 1rem;
+    background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .logo { font-weight: 800; font-size: 1.05rem; color: var(--accent2); white-space: nowrap; }
+  .logo span { color: var(--text); }
+  select, .num-input {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.42rem 0.6rem; font-size: 0.82rem; outline: none;
+  }
+  select:focus { border-color: var(--accent); }
+  .btn {
+    border: none; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; transition: filter 0.15s;
+  }
+  .btn:hover { filter: brightness(1.15); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-run { background: linear-gradient(135deg, var(--accent), #6d28d9); color: #fff; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .spacer { flex: 1; }
+  .provider-note { font-size: 0.72rem; color: var(--muted); max-width: 300px; }
 
-    /* Layout */
-    .workspace { display:grid; grid-template-columns:260px 1fr 300px; flex:1; overflow:hidden; }
+  /* ===== Layout ===== */
+  .workspace { display: grid; grid-template-columns: 250px 1fr minmax(320px, 420px); flex: 1; overflow: hidden; }
+  @media (max-width: 980px) {
+    .workspace { grid-template-columns: 1fr; grid-auto-rows: minmax(0, auto); overflow-y: auto; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .output-panel { border-left: none; border-top: 2px solid var(--accent); min-height: 260px; }
+    .editor-wrap { min-height: 300px; }
+  }
 
-    /* Sidebar — Chain Builder */
-    .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
-    .sidebar-header { padding:1rem; font-size:0.8rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid var(--border); }
-    .chain-steps { flex:1; overflow-y:auto; padding:0.75rem; display:flex; flex-direction:column; gap:0.5rem; }
-    .step-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:0.75rem; cursor:grab; transition:border-color 0.2s, transform 0.15s; position:relative; }
-    .step-card:hover { border-color:var(--accent2); transform:translateX(3px); }
-    .step-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
-    .step-name { font-size:0.82rem; font-weight:600; margin-bottom:0.25rem; }
-    .step-provider { font-size:0.72rem; color:var(--muted); font-family:'JetBrains Mono', monospace; }
-    .step-arrow { color:var(--muted); text-align:center; font-size:0.75rem; margin:0.1rem 0; }
-    .add-step-btn { margin:0.75rem; background:transparent; border:1px dashed var(--border); border-radius:10px; padding:0.6rem; color:var(--muted); cursor:pointer; font-size:0.8rem; transition:border-color 0.2s, color 0.2s; }
-    .add-step-btn:hover { border-color:var(--accent2); color:var(--accent2); }
+  /* ===== Sidebar ===== */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+  .side-h { padding: 0.7rem 0.9rem 0.35rem; font-size: 0.7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; justify-content: space-between; align-items: center; }
+  .side-h button { background: none; border: 1px solid var(--border); color: var(--accent2); border-radius: 6px; width: 22px; height: 22px; cursor: pointer; font-size: 0.9rem; line-height: 1; }
+  .step-item {
+    display: flex; align-items: center; gap: 0.5rem; margin: 0.15rem 0.55rem; padding: 0.5rem 0.6rem;
+    border-radius: 8px; cursor: pointer; border: 1px solid transparent; font-size: 0.83rem;
+  }
+  .step-item:hover { background: var(--surface2); }
+  .step-item.active { background: var(--surface2); border-color: var(--accent); }
+  .step-num { background: var(--accent); color: #fff; border-radius: 6px; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; }
+  .step-name { flex: 1; background: none; border: none; color: var(--text); font-size: 0.83rem; outline: none; min-width: 0; }
+  .step-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; }
+  .step-del:hover { color: var(--red); }
+  .step-flow { text-align: center; color: var(--muted); font-size: 0.7rem; margin: -2px 0; }
+  .saved-item { display: flex; align-items: center; margin: 0.15rem 0.55rem; padding: 0.45rem 0.6rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+  .saved-item:hover { background: var(--surface2); }
+  .saved-item .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .saved-item .meta { color: var(--muted); font-size: 0.7rem; margin: 0 0.5rem; }
+  .empty-note { color: var(--muted); font-size: 0.75rem; padding: 0.3rem 1rem 0.7rem; }
 
-    /* Center — Editor */
-    .editor-panel { display:flex; flex-direction:column; overflow:hidden; }
-    .editor-tabs { display:flex; background:var(--surface); border-bottom:1px solid var(--border); }
-    .tab { padding:0.6rem 1.2rem; font-size:0.8rem; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; color:var(--muted); transition:color 0.2s; }
-    .tab.active { border-color:var(--accent2); color:var(--accent2); }
-    .editor-container { flex:1; overflow:hidden; display:flex; flex-direction:column; }
-    .CodeMirror { height:100%; font-family:'JetBrains Mono', monospace; font-size:13px; background:var(--bg) !important; color:#c9d1d9; }
-    .CodeMirror-gutters { background:var(--bg) !important; border-right:1px solid var(--border) !important; }
-    .CodeMirror-linenumber { color:var(--muted) !important; }
+  /* ===== Editor panel ===== */
+  .editor-panel { display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .tab { padding: 0.65rem 1.1rem; font-size: 0.83rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+  .editor-wrap { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+  .editor-wrap.active { display: flex; }
+  .CodeMirror { height: 100%; flex: 1; background: var(--bg) !important; color: #c9d1d9; font-size: 13px; }
+  .CodeMirror-gutters { background: var(--bg) !important; border-right: 1px solid var(--border) !important; }
+  .CodeMirror-linenumber { color: #3d465a !important; }
+  .CodeMirror-cursor { border-color: var(--accent2) !important; }
+  .pane-hint { padding: 0.45rem 1rem; font-size: 0.74rem; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--border); }
+  .pane-hint code { color: var(--cyan); }
+  textarea.pane-text { flex: 1; background: var(--bg); border: none; color: var(--text); padding: 0.9rem 1rem; font-size: 13px; resize: none; outline: none; line-height: 1.55; }
 
-    /* Right panel — Output */
-    .output-panel { background:var(--surface); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
-    .output-header { padding:0.75rem 1rem; font-size:0.8rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-    .output-content { flex:1; overflow-y:auto; padding:1rem; font-family:'JetBrains Mono', monospace; font-size:0.78rem; line-height:1.6; }
-    .output-content.loading { display:flex; align-items:center; justify-content:center; color:var(--muted); }
-    .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--accent2); border-radius:50%; animation:spin 0.8s linear infinite; margin-right:0.75rem; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.75rem 1rem; border-top:1px solid var(--border); }
-    .stat { background:var(--surface2); border-radius:8px; padding:0.5rem 0.75rem; }
-    .stat-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
-    .stat-value { font-size:0.9rem; font-weight:700; font-family:'JetBrains Mono', monospace; color:var(--cyan); margin-top:0.1rem; }
+  /* Compare tab */
+  .compare-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0; overflow: hidden; }
+  .compare-col { display: flex; flex-direction: column; border-right: 1px solid var(--border); min-width: 0; }
+  .compare-col:last-child { border-right: none; }
+  .compare-col .col-h { padding: 0.45rem 0.9rem; font-size: 0.75rem; font-weight: 700; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .col-h.a { color: var(--cyan); } .col-h.b { color: var(--yellow); }
+  .compare-col textarea { flex: 1; background: var(--bg); border: none; color: var(--text); padding: 0.8rem 0.9rem; font-size: 12.5px; resize: none; outline: none; line-height: 1.5; }
+  .compare-controls { display: flex; gap: 0.7rem; align-items: center; padding: 0.55rem 0.9rem; border-top: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  .compare-controls label { font-size: 0.75rem; color: var(--muted); }
+  .compare-controls input[type=text] { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.35rem 0.55rem; font-size: 0.78rem; flex: 1; min-width: 140px; }
+  .compare-controls input[type=number] { width: 58px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.35rem 0.45rem; font-size: 0.78rem; }
 
-    .token-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:600; background:rgba(168,85,247,0.15); color:var(--accent2); }
+  /* ===== Output panel ===== */
+  .output-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .out-h { padding: 0.7rem 1rem; font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .badge { background: var(--accent); color: #fff; border-radius: 20px; padding: 0.13rem 0.6rem; font-size: 0.68rem; font-weight: 700; }
+  .out-body { flex: 1; overflow-y: auto; padding: 0.8rem 1rem; font-size: 0.8rem; line-height: 1.55; }
+  .out-placeholder { color: var(--muted); }
+  .out-placeholder strong { color: var(--accent2); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; padding: 0.6rem 1rem; border-top: 1px solid var(--border); }
+  .stat { background: var(--surface2); border-radius: 8px; padding: 0.42rem 0.5rem; text-align: center; }
+  .stat .v { font-size: 0.85rem; font-weight: 700; color: var(--accent2); }
+  .stat .l { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
-    /* Glowing effect */
-    .run-btn { box-shadow: 0 0 20px rgba(124,58,237,0.3); }
-    .run-btn:hover { box-shadow: 0 0 30px rgba(124,58,237,0.5); }
-
-    ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
-
-    @media (max-width: 900px) {
-      /* Stack panels vertically instead of hiding them so the output
-         (result, tokens, cost, latency) is always visible on narrow windows. */
-      .workspace { grid-template-columns: 1fr; grid-auto-rows: minmax(0, auto); overflow-y: auto; }
-      .sidebar { display: none; }
-      .output-panel { border-left: none; border-top: 2px solid var(--accent2); min-height: 240px; }
-      .editor-container { min-height: 260px; }
-    }
-  </style>
+  .trace-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.6rem; overflow: hidden; }
+  .trace-h { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.7rem; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
+  .trace-h .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .trace-h .dot.running { background: var(--yellow); animation: pulse 1s infinite; }
+  .trace-h .dot.done { background: var(--green); }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+  .trace-h .tmeta { margin-left: auto; color: var(--muted); font-weight: 400; font-size: 0.7rem; }
+  .trace-body { padding: 0.55rem 0.7rem; border-top: 1px solid var(--border); white-space: pre-wrap; font-size: 0.74rem; color: #b8c1d1; max-height: 200px; overflow-y: auto; }
+  .final-output { background: var(--bg); border: 1px solid var(--accent); border-radius: 10px; padding: 0.7rem 0.8rem; white-space: pre-wrap; font-size: 0.78rem; margin-bottom: 0.7rem; }
+  .section-label { font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin: 0.6rem 0 0.4rem; }
+  .error-box { background: rgba(248,113,113,0.08); border: 1px solid var(--red); color: var(--red); border-radius: 10px; padding: 0.7rem 0.8rem; white-space: pre-wrap; }
+  .verdict { background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(34,211,238,0.1)); border: 1px solid var(--accent); border-radius: 10px; padding: 0.7rem 0.85rem; font-size: 0.83rem; font-weight: 700; margin-bottom: 0.7rem; }
+  .cmp-out { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.6rem; overflow: hidden; }
+  .cmp-out .h { padding: 0.4rem 0.7rem; font-size: 0.72rem; font-weight: 700; background: var(--surface2); }
+  .cmp-out.a .h { color: var(--cyan); } .cmp-out.b .h { color: var(--yellow); }
+  .cmp-out .b2 { padding: 0.55rem 0.7rem; white-space: pre-wrap; font-size: 0.73rem; color: #b8c1d1; max-height: 160px; overflow-y: auto; }
+  table.metrics { width: 100%; border-collapse: collapse; font-size: 0.76rem; margin-bottom: 0.6rem; }
+  table.metrics th, table.metrics td { padding: 0.34rem 0.5rem; border-bottom: 1px solid var(--border); text-align: right; }
+  table.metrics th:first-child, table.metrics td:first-child { text-align: left; color: var(--muted); }
+  table.metrics thead th { color: var(--muted); font-weight: 600; }
+  .win { color: var(--green); font-weight: 700; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: rot 0.8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
-<nav>
-  <div class="logo">⚒️ <span>LLM Chain Forge</span> <small style="color:var(--muted);font-size:0.7rem;font-weight:400">Playground</small></div>
-  <div class="nav-controls">
-    <select id="provider-select">
-      <option value="mock">🔮 Mock Provider</option>
-      <option value="openai">🤖 OpenAI</option>
-      <option value="anthropic">🧠 Anthropic</option>
-    </select>
-    <select id="model-select">
-      <option value="mock-model">mock-model</option>
-      <option value="gpt-4o-mini">gpt-4o-mini</option>
-      <option value="gpt-4o">gpt-4o</option>
-      <option value="claude-3-haiku">claude-3-haiku</option>
-    </select>
-    <button class="run-btn" onclick="runChain()">▶ Run Chain</button>
-  </div>
-</nav>
+
+<header>
+  <div class="logo">⚒️ Chain <span>Forge</span></div>
+  <select id="provider-select" title="LLM provider"></select>
+  <select id="model-select" title="Model"></select>
+  <div class="provider-note" id="provider-note"></div>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost" onclick="saveChain()">💾 Save</button>
+  <button class="btn btn-run" id="run-btn" onclick="runActive()">▶ Run Chain</button>
+</header>
 
 <div class="workspace">
-  <!-- Sidebar -->
+
+  <!-- ===== Sidebar ===== -->
   <div class="sidebar">
-    <div class="sidebar-header">Chain Builder</div>
-    <div class="chain-steps" id="chain-steps">
-      <div class="step-card active" onclick="selectStep(this)">
-        <div class="step-name">📥 Input</div>
-        <div class="step-provider">passthrough</div>
-      </div>
-      <div class="step-arrow">↓</div>
-      <div class="step-card" onclick="selectStep(this)">
-        <div class="step-name">✏️ Rewrite</div>
-        <div class="step-provider">mock-model · T=0.7</div>
-      </div>
-      <div class="step-arrow">↓</div>
-      <div class="step-card" onclick="selectStep(this)">
-        <div class="step-name">📊 Summarize</div>
-        <div class="step-provider">mock-model · T=0.3</div>
-      </div>
-      <div class="step-arrow">↓</div>
-      <div class="step-card" onclick="selectStep(this)">
-        <div class="step-name">📤 Output</div>
-        <div class="step-provider">passthrough</div>
-      </div>
-    </div>
-    <button class="add-step-btn" onclick="addStep()">＋ Add Step</button>
+    <div class="side-h">Chain Steps <button onclick="addStep()" title="Add step">+</button></div>
+    <div id="steps-list"></div>
+    <div class="side-h" style="margin-top:0.7rem">Saved Chains</div>
+    <div id="saved-list"><div class="empty-note">Nothing saved yet.</div></div>
   </div>
 
-  <!-- Editor -->
+  <!-- ===== Editor ===== -->
   <div class="editor-panel">
-    <div class="editor-tabs">
-      <div class="tab active" onclick="switchTab(this, 'prompt')">Prompt Template</div>
-      <div class="tab" onclick="switchTab(this, 'input')">Input Variables</div>
-      <div class="tab" onclick="switchTab(this, 'config')">Chain Config</div>
+    <div class="tabs">
+      <div class="tab active" data-tab="prompt" onclick="switchTab('prompt')">Prompt</div>
+      <div class="tab" data-tab="vars" onclick="switchTab('vars')">Input Variables</div>
+      <div class="tab" data-tab="compare" onclick="switchTab('compare')">⚖️ Compare Prompts</div>
     </div>
-    <div class="editor-container">
-      <textarea id="prompt-editor">You are a helpful AI assistant.
 
-Summarize the following text in a clear and concise way:
+    <div class="editor-wrap active" id="pane-prompt">
+      <div class="pane-hint">Prompt for the selected step. Use <code>{{variable}}</code> for inputs and <code>{{step_name.output}}</code> to chain a previous step's result.</div>
+      <textarea id="prompt-editor"></textarea>
+    </div>
 
-{{input}}
+    <div class="editor-wrap" id="pane-vars">
+      <div class="pane-hint">JSON object of input variables. Keys become <code>{{variables}}</code> available to every step.</div>
+      <textarea class="pane-text" id="vars-editor" spellcheck="false">{
+  "input": "Type the text you want the chain to process here."
+}</textarea>
+    </div>
 
-Provide:
-1. A one-sentence TL;DR
-2. Three key points
-3. Any important caveats
+    <div class="editor-wrap" id="pane-compare">
+      <div class="pane-hint">Write two prompt variants. Both run against the same Input Variables — you get outputs side-by-side plus token, cost, and latency comparison.</div>
+      <div class="compare-grid">
+        <div class="compare-col">
+          <div class="col-h a">PROMPT A</div>
+          <textarea id="prompt-a" spellcheck="false">Summarize the following text briefly:
 
-Summary:</textarea>
+{{input}}</textarea>
+        </div>
+        <div class="compare-col">
+          <div class="col-h b">PROMPT B</div>
+          <textarea id="prompt-b" spellcheck="false">You are an expert editor. Summarize the following text in exactly one sentence, preserving all key facts:
+
+{{input}}</textarea>
+        </div>
+      </div>
+      <div class="compare-controls">
+        <label>Expected output (optional, enables accuracy scoring):</label>
+        <input type="text" id="expected-output" placeholder="Leave empty to compare cost & latency only">
+        <label>Runs:</label>
+        <input type="number" id="cmp-runs" value="3" min="1" max="25">
+      </div>
     </div>
   </div>
 
-  <!-- Output -->
+  <!-- ===== Output ===== -->
   <div class="output-panel">
-    <div class="output-header">
-      Output <span class="token-badge" id="token-badge">0 tokens</span>
+    <div class="out-h">Output <span class="badge" id="token-badge">0 tokens</span></div>
+    <div class="out-body" id="out-body">
+      <div class="out-placeholder">Press <strong>▶ Run Chain</strong> to execute your steps in order, or open <strong>⚖️ Compare Prompts</strong> to A/B test two prompt variants.<br><br>
+      The <strong>mock provider</strong> is free and offline — it echoes back the exact rendered prompt each step received, so you can verify your templates and chaining work. Select OpenAI or Anthropic (API key required) for real completions.</div>
     </div>
-    <div class="output-content" id="output-content" style="color:var(--muted)">
-      Press <strong style="color:var(--accent2)">▶ Run Chain</strong> to execute...
-    </div>
-    <div class="stats-grid">
-      <div class="stat"><div class="stat-label">Latency</div><div class="stat-value" id="stat-latency">—</div></div>
-      <div class="stat"><div class="stat-label">Cost</div><div class="stat-value" id="stat-cost">—</div></div>
-      <div class="stat"><div class="stat-label">Prompt Tokens</div><div class="stat-value" id="stat-prompt">—</div></div>
-      <div class="stat"><div class="stat-label">Completion</div><div class="stat-value" id="stat-completion">—</div></div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="st-latency">—</div><div class="l">Latency</div></div>
+      <div class="stat"><div class="v" id="st-prompt">—</div><div class="l">Prompt tok</div></div>
+      <div class="stat"><div class="v" id="st-completion">—</div><div class="l">Compl. tok</div></div>
+      <div class="stat"><div class="v" id="st-cost">—</div><div class="l">Cost</div></div>
     </div>
   </div>
 </div>
 
 <script>
-  // Resolve the API base. When the page is served by the app itself
-  // (http://127.0.0.1:8003) relative URLs work; when it is opened as a file
-  // or inside an editor preview pane there is no origin, so fall back to the
-  // default local server. CORS is enabled server-side to allow this.
-  const API_BASE = (location.protocol === 'http:' || location.protocol === 'https:')
-    ? ''
-    : 'http://127.0.0.1:8003';
+// Resolve API base: when served by the app relative URLs work; when opened as
+// a file or in an editor preview there is no http origin — fall back to the
+// default local server (CORS is enabled server-side).
+const IS_HTTP = location.protocol === 'http:' || location.protocol === 'https:';
+const API_BASE = IS_HTTP ? '' : 'http://127.0.0.1:8003';
+const WS_BASE = IS_HTTP
+  ? (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host
+  : 'ws://127.0.0.1:8003';
 
-  // CodeMirror editor
-  const cm = CodeMirror.fromTextArea(document.getElementById('prompt-editor'), {
-    mode: 'javascript', theme: 'default', lineNumbers: true, lineWrapping: true,
+// ---------- state ----------
+let steps = [
+  { name: 'extract',   prompt: 'Extract the 3 most important facts from this text:\n\n{{input}}' },
+  { name: 'summarize', prompt: 'Rewrite these facts as one friendly sentence:\n\n{{extract.output}}' },
+];
+let selected = 0;
+let providers = {};
+
+// ---------- CodeMirror ----------
+const cm = CodeMirror.fromTextArea(document.getElementById('prompt-editor'), {
+  lineNumbers: true, lineWrapping: true, mode: null,
+});
+cm.setValue(steps[0].prompt);
+cm.on('change', () => { steps[selected].prompt = cm.getValue(); });
+
+// ---------- steps sidebar ----------
+function renderSteps() {
+  const el = document.getElementById('steps-list');
+  el.innerHTML = '';
+  steps.forEach((s, i) => {
+    if (i > 0) {
+      const flow = document.createElement('div');
+      flow.className = 'step-flow'; flow.textContent = '↓';
+      el.appendChild(flow);
+    }
+    const item = document.createElement('div');
+    item.className = 'step-item' + (i === selected ? ' active' : '');
+    item.onclick = () => selectStep(i);
+    const num = document.createElement('div'); num.className = 'step-num'; num.textContent = i + 1;
+    const name = document.createElement('input');
+    name.className = 'step-name'; name.value = s.name;
+    name.onclick = (e) => e.stopPropagation();
+    name.onchange = () => { s.name = name.value.trim().replace(/\s+/g, '_') || ('step' + (i + 1)); renderSteps(); };
+    const del = document.createElement('button');
+    del.className = 'step-del'; del.textContent = '✕'; del.title = 'Remove step';
+    del.onclick = (e) => { e.stopPropagation(); removeStep(i); };
+    item.append(num, name, del);
+    el.appendChild(item);
   });
-  cm.setSize('100%', '100%');
+}
+function selectStep(i) { selected = i; cm.setValue(steps[i].prompt); renderSteps(); switchTab('prompt'); }
+function addStep() {
+  const prev = steps[steps.length - 1];
+  const ref = prev ? `{{${prev.name}.output}}` : '{{input}}';
+  steps.push({ name: 'step' + (steps.length + 1), prompt: `Do something with:\n\n${ref}` });
+  selectStep(steps.length - 1);
+}
+function removeStep(i) {
+  if (steps.length === 1) return;
+  steps.splice(i, 1);
+  selectStep(Math.min(selected, steps.length - 1));
+}
+renderSteps();
 
-  function selectStep(el) {
-    document.querySelectorAll('.step-card').forEach(e => e.classList.remove('active'));
-    el.classList.add('active');
+// ---------- tabs ----------
+let activeTab = 'prompt';
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.editor-wrap').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + tab).classList.add('active');
+  document.getElementById('run-btn').textContent = tab === 'compare' ? '▶ Run Compare' : '▶ Run Chain';
+  if (tab === 'prompt') cm.refresh();
+}
+
+// ---------- providers ----------
+async function loadProviders() {
+  try {
+    providers = await (await fetch(API_BASE + '/api/providers')).json();
+  } catch { providers = { mock: { available: true, models: ['mock-model'], note: '' } }; }
+  const sel = document.getElementById('provider-select');
+  sel.innerHTML = '';
+  const icons = { mock: '🔮', openai: '🟢', anthropic: '🟠' };
+  for (const [name, info] of Object.entries(providers)) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = `${icons[name] || ''} ${name}${info.available ? '' : ' (no key)'}`;
+    opt.disabled = !info.available;
+    sel.appendChild(opt);
   }
+  sel.onchange = updateModels;
+  updateModels();
+}
+function updateModels() {
+  const p = document.getElementById('provider-select').value;
+  const info = providers[p] || { models: ['mock-model'], note: '' };
+  const msel = document.getElementById('model-select');
+  msel.innerHTML = '';
+  (info.models || []).forEach(m => {
+    const o = document.createElement('option'); o.value = m; o.textContent = m; msel.appendChild(o);
+  });
+  document.getElementById('provider-note').textContent = info.note || '';
+}
+loadProviders();
 
-  let stepCount = 4;
-  function addStep() {
-    const steps = document.getElementById('chain-steps');
-    const arrow = document.createElement('div');
-    arrow.className = 'step-arrow'; arrow.textContent = '↓';
-    const card = document.createElement('div');
-    card.className = 'step-card';
-    card.onclick = () => selectStep(card);
-    card.innerHTML = `<div class="step-name">🔗 Step ${++stepCount}</div><div class="step-provider">mock-model · T=0.7</div>`;
-    steps.appendChild(arrow);
-    steps.appendChild(card);
-    selectStep(card);
-  }
+// ---------- helpers ----------
+function getVars() {
+  const raw = document.getElementById('vars-editor').value;
+  try { return JSON.parse(raw); }
+  catch (e) { throw new Error('Input Variables is not valid JSON: ' + e.message); }
+}
+function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function setStats(latency, ptok, ctok, cost) {
+  document.getElementById('st-latency').textContent = latency != null ? Math.round(latency) + 'ms' : '—';
+  document.getElementById('st-prompt').textContent = ptok != null ? ptok : '—';
+  document.getElementById('st-completion').textContent = ctok != null ? ctok : '—';
+  document.getElementById('st-cost').textContent = cost != null ? '$' + cost.toFixed(5) : '—';
+  const total = (ptok || 0) + (ctok || 0);
+  document.getElementById('token-badge').textContent = total + ' tokens';
+}
+function payload() {
+  return {
+    chain_config: { links: steps.map(s => ({ name: s.name, prompt: s.prompt })) },
+    input: getVars(),
+    provider: document.getElementById('provider-select').value,
+    model: document.getElementById('model-select').value,
+  };
+}
 
-  function switchTab(el, tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-  }
+// ---------- run (streaming with POST fallback) ----------
+function runActive() { activeTab === 'compare' ? runCompare() : runChain(); }
 
-  async function runChain() {
-    const out = document.getElementById('output-content');
-    out.innerHTML = '<div class="loading"><div class="spinner"></div>Running chain...</div>';
-    out.style.color = '';
+async function runChain() {
+  const out = document.getElementById('out-body');
+  let body;
+  try { body = payload(); }
+  catch (e) { out.innerHTML = `<div class="error-box">${esc(e.message)}</div>`; return; }
 
-    const prompt = cm.getValue();
-    const provider = document.getElementById('provider-select').value;
-    const model = document.getElementById('model-select').value;
-
-    const payload = {
-      chain_config: {
-        links: [
-          { name: "step1", prompt: prompt },
-        ]
-      },
-      input: { input: "The quick brown fox jumps over the lazy dog. This is a test of the LLM Chain Forge playground." },
-      provider, model,
+  out.innerHTML = '<div class="section-label">Execution</div><div id="trace-area"></div><div id="final-area"></div>';
+  const traceArea = document.getElementById('trace-area');
+  const cards = {};
+  body.chain_config.links.forEach(l => {
+    const c = document.createElement('div');
+    c.className = 'trace-card';
+    c.innerHTML = `<div class="trace-h"><span class="dot"></span>${esc(l.name)}<span class="tmeta">queued</span></div><div class="trace-body" style="display:none"></div>`;
+    c.querySelector('.trace-h').onclick = () => {
+      const b = c.querySelector('.trace-body');
+      b.style.display = b.style.display === 'none' ? 'block' : 'none';
     };
+    traceArea.appendChild(c);
+    cards[l.name] = c;
+  });
 
-    try {
-      const start = Date.now();
-      const resp = await fetch(API_BASE + '/api/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await resp.json();
-      const elapsed = Date.now() - start;
+  const finish = (output, totals) => {
+    document.getElementById('final-area').innerHTML =
+      `<div class="section-label">Final Output</div><div class="final-output">${esc(output)}</div>`;
+    if (totals) setStats(totals.latency_ms, null, null, totals.cost_usd);
+  };
 
-      if (data.error) {
-        out.style.color = '#ef4444';
-        out.textContent = '❌ Error: ' + data.error;
-      } else {
-        out.style.color = '';
-        out.innerHTML = `<div style="white-space:pre-wrap;color:var(--text)">${escapeHtml(data.output || '')}</div>`;
-        document.getElementById('stat-latency').textContent = `${elapsed}ms`;
-        document.getElementById('stat-cost').textContent = data.cost_usd != null ? `$${(data.cost_usd||0).toFixed(5)}` : '—';
-        const tu = data.token_usage || {};
-        document.getElementById('stat-prompt').textContent = tu.prompt_tokens ?? tu.prompt ?? '—';
-        document.getElementById('stat-completion').textContent = tu.completion_tokens ?? tu.completion ?? '—';
-        const total = (tu.prompt_tokens ?? 0) + (tu.completion_tokens ?? 0);
-        document.getElementById('token-badge').textContent = `${total} tokens`;
+  // Try streaming over WebSocket first
+  let usedWs = false;
+  try {
+    await new Promise((resolve, reject) => {
+      const ws = new WebSocket(WS_BASE + '/ws/run');
+      const timer = setTimeout(() => { try { ws.close(); } catch {} ; reject(new Error('ws timeout')); }, 4000);
+      let ptok = 0, ctok = 0;
+      ws.onopen = () => { clearTimeout(timer); usedWs = true; ws.send(JSON.stringify(body)); };
+      ws.onerror = () => { clearTimeout(timer); reject(new Error('ws failed')); };
+      ws.onmessage = (m) => {
+        const ev = JSON.parse(m.data);
+        if (ev.event === 'link_start' && cards[ev.link]) {
+          cards[ev.link].querySelector('.dot').className = 'dot running';
+          cards[ev.link].querySelector('.tmeta').textContent = 'running…';
+        } else if (ev.event === 'link_complete' && cards[ev.link]) {
+          const c = cards[ev.link];
+          c.querySelector('.dot').className = 'dot done';
+          c.querySelector('.tmeta').textContent =
+            `${Math.round(ev.latency_ms)}ms · ${ev.token_usage.total_tokens} tok`;
+          c.querySelector('.trace-body').textContent = ev.output;
+          c.querySelector('.trace-body').style.display = 'block';
+          ptok += ev.token_usage.prompt_tokens || 0;
+          ctok += ev.token_usage.completion_tokens || 0;
+          setStats(null, ptok, ctok, null);
+        } else if (ev.event === 'done') {
+          finish(ev.output, { latency_ms: ev.totals.latency_ms, cost_usd: ev.totals.cost_usd });
+          setStats(ev.totals.latency_ms, ptok, ctok, ev.totals.cost_usd);
+          ws.close(); resolve();
+        } else if (ev.event === 'error') {
+          document.getElementById('final-area').innerHTML = `<div class="error-box">${esc(ev.detail)}</div>`;
+          ws.close(); resolve();
+        }
+      };
+    });
+  } catch {
+    // POST fallback (e.g. opened as a file where WS may be blocked)
+    if (!usedWs) {
+      try {
+        const data = await (await fetch(API_BASE + '/api/run', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        })).json();
+        if (data.error) {
+          document.getElementById('final-area').innerHTML = `<div class="error-box">${esc(data.error)}</div>`;
+          return;
+        }
+        (data.link_results || []).forEach(lr => {
+          const c = cards[lr.link]; if (!c) return;
+          c.querySelector('.dot').className = 'dot done';
+          c.querySelector('.tmeta').textContent = `${Math.round(lr.latency_ms)}ms · ${lr.token_usage.total_tokens} tok`;
+          c.querySelector('.trace-body').textContent = lr.output;
+          c.querySelector('.trace-body').style.display = 'block';
+        });
+        finish(data.output, null);
+        setStats(data.latency_ms, data.token_usage.prompt_tokens, data.token_usage.completion_tokens, data.cost_usd);
+      } catch (e) {
+        document.getElementById('final-area').innerHTML = `<div class="error-box">Connection error: ${esc(e.message)}<br>Is the server running? Start it with:<br><code>python chainforge/playground/app.py</code></div>`;
       }
-    } catch(e) {
-      out.style.color = '#ef4444';
-      out.textContent = '❌ Connection error: ' + e.message;
     }
   }
+}
 
-  function escapeHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+// ---------- compare ----------
+async function runCompare() {
+  const out = document.getElementById('out-body');
+  let vars;
+  try { vars = getVars(); }
+  catch (e) { out.innerHTML = `<div class="error-box">${esc(e.message)}</div>`; return; }
 
-  // WebSocket
+  out.innerHTML = '<div class="out-placeholder"><span class="spin"></span>Running compare…</div>';
+  const body = {
+    prompt_a: document.getElementById('prompt-a').value,
+    prompt_b: document.getElementById('prompt-b').value,
+    input: vars,
+    provider: document.getElementById('provider-select').value,
+    model: document.getElementById('model-select').value,
+    runs: parseInt(document.getElementById('cmp-runs').value || '1', 10),
+  };
+  const expected = document.getElementById('expected-output').value.trim();
+  if (expected) body.expected_output = expected;
+
   try {
-    const ws = new WebSocket(`ws://${location.host}/ws/run`);
-    ws.onopen = () => console.log('WS connected');
-  } catch(_) {}
+    const r = await (await fetch(API_BASE + '/api/compare', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    })).json();
+    if (r.error) { out.innerHTML = `<div class="error-box">${esc(r.error)}</div>`; return; }
+
+    const row = (label, a, b, fmt, lowerWins) => {
+      if (a == null || b == null) return '';
+      const aw = lowerWins ? a < b : a > b;
+      const bw = lowerWins ? b < a : b > a;
+      return `<tr><td>${label}</td><td class="${aw ? 'win' : ''}">${fmt(a)}</td><td class="${bw ? 'win' : ''}">${fmt(b)}</td></tr>`;
+    };
+    out.innerHTML = `
+      <div class="verdict">🏆 ${esc(r.verdict)}</div>
+      <table class="metrics">
+        <thead><tr><th>Metric (${r.runs} run${r.runs > 1 ? 's' : ''})</th><th>Prompt A</th><th>Prompt B</th></tr></thead>
+        <tbody>
+          ${r.a.exact_match_rate != null ? row('Accuracy', r.a.exact_match_rate, r.b.exact_match_rate, v => (v * 100).toFixed(0) + '%', false) : ''}
+          ${row('Avg tokens', r.a.avg_tokens, r.b.avg_tokens, v => v.toFixed(0), true)}
+          ${row('Avg latency', r.a.avg_latency_ms, r.b.avg_latency_ms, v => Math.round(v) + 'ms', true)}
+          ${row('Total cost', r.a.total_cost_usd, r.b.total_cost_usd, v => '$' + v.toFixed(5), true)}
+          ${r.p_value != null ? `<tr><td>p-value</td><td colspan="2">${r.p_value.toFixed(4)} ${r.p_value < 0.05 ? '(significant ✓)' : '(not significant)'}</td></tr>` : ''}
+        </tbody>
+      </table>
+      <div class="section-label">Outputs</div>
+      <div class="cmp-out a"><div class="h">PROMPT A OUTPUT</div><div class="b2">${esc(r.a.output)}</div></div>
+      <div class="cmp-out b"><div class="h">PROMPT B OUTPUT</div><div class="b2">${esc(r.b.output)}</div></div>`;
+  } catch (e) {
+    out.innerHTML = `<div class="error-box">Connection error: ${esc(e.message)}</div>`;
+  }
+}
+
+// ---------- saved chains ----------
+async function refreshSaved() {
+  try {
+    const data = await (await fetch(API_BASE + '/api/chains')).json();
+    const el = document.getElementById('saved-list');
+    if (!data.chains || !data.chains.length) {
+      el.innerHTML = '<div class="empty-note">Nothing saved yet.</div>'; return;
+    }
+    el.innerHTML = '';
+    data.chains.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'saved-item';
+      item.innerHTML = `<span class="nm">📄 ${esc(c.name)}</span><span class="meta">${c.links} steps</span>`;
+      const del = document.createElement('button');
+      del.className = 'step-del'; del.textContent = '✕';
+      del.onclick = async (e) => {
+        e.stopPropagation();
+        await fetch(`${API_BASE}/api/chains/${c.id}`, { method: 'DELETE' });
+        refreshSaved();
+      };
+      item.appendChild(del);
+      item.onclick = () => loadSaved(c.id);
+      el.appendChild(item);
+    });
+  } catch { /* server offline — leave as is */ }
+}
+async function loadSaved(id) {
+  const data = await (await fetch(`${API_BASE}/api/chains/${id}`)).json();
+  if (data.config && data.config.links) {
+    steps = data.config.links.map(l => ({ name: l.name, prompt: l.prompt }));
+    if (data.config.variables) {
+      document.getElementById('vars-editor').value = JSON.stringify(data.config.variables, null, 2);
+    }
+    selectStep(0);
+  }
+}
+async function saveChain() {
+  const name = prompt('Name for this chain:', 'my-chain');
+  if (!name) return;
+  let vars = {};
+  try { vars = getVars(); } catch {}
+  await fetch(API_BASE + '/api/chains', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, config: { links: steps.map(s => ({ name: s.name, prompt: s.prompt })), variables: vars } }),
+  });
+  refreshSaved();
+}
+refreshSaved();
 </script>
 </body>
 </html>
