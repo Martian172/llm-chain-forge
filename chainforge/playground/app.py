@@ -16,10 +16,18 @@ from __future__ import annotations
 import json
 import os
 import statistics
+import sys
 import time
 import uuid
 from pathlib import Path
 from typing import Any, Optional
+
+# Running this file directly (python chainforge/playground/app.py) puts only
+# the script's own directory on sys.path, so `import chainforge` fails unless
+# the package is installed. Add the project root so it works either way.
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
