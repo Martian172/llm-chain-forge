@@ -410,7 +410,7 @@ class Chain:
             lines.append(f"│{'▼':^{width - 2}}│")
 
             if isinstance(step, _ParallelGroup):
-                names = " ║ ".join(f"[{l.name}]" for l in step.links)
+                names = " ║ ".join(f"[{lk.name}]" for lk in step.links)
                 lines.append(f"│{('  ╠══ ' + names + ' ══╣  ').center(width - 2)}│")
             elif isinstance(step, BranchConfig):
                 lines.append(f"│{f'<{step.name}?>'.center(width - 2)}│")
@@ -465,7 +465,7 @@ class Chain:
             elif isinstance(step, _ParallelGroup):
                 data["links"].append({
                     "type": "parallel",
-                    "links": [l.to_dict() for l in step.links],
+                    "links": [lk.to_dict() for lk in step.links],
                 })
             elif isinstance(step, BranchConfig):
                 data["links"].append({
@@ -503,7 +503,7 @@ class Chain:
             >>> providers_map = {"openai": OpenAIProvider(api_key="...")}
             >>> chain = Chain.from_yaml("my_chain.yaml", providers_map)
         """
-        from chainforge.core.link import Link, PromptTemplate
+        from chainforge.core.link import Link
 
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         chain = cls(

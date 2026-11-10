@@ -3,9 +3,6 @@ import sys
 
 import click
 from rich.console import Console
-from rich.table import Table
-from rich.progress import track
-from rich import box
 
 # Windows consoles default to a legacy codepage (e.g. cp1252) that cannot
 # encode the unicode symbols in CLI output; force UTF-8 with replacement so
@@ -20,7 +17,6 @@ console = Console()
 @click.group()
 def cli():
     """⚒️  LLM Chain Forge — Build, Test & Optimize LLM Prompt Chains."""
-    pass
 
 
 def _make_provider(provider_name: str, model: str):
@@ -122,9 +118,11 @@ def compare_chains(chain_a, chain_b, test_file, provider, model):
 @click.option("--port", default=8000, show_default=True)
 def playground(host, port):
     """Launch the visual chain playground in your browser."""
-    import webbrowser, uvicorn
+    import webbrowser
+
+    import uvicorn
     from chainforge.playground.app import app
-    console.print(f"[bold purple]⚒️  Chain Forge Playground[/bold purple]")
+    console.print("[bold purple]⚒️  Chain Forge Playground[/bold purple]")
     console.print(f"[cyan]  → http://{host}:{port}[/cyan]")
     webbrowser.open(f"http://{host}:{port}")
     uvicorn.run(app, host=host, port=port)

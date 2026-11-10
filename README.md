@@ -4,9 +4,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://img.shields.io/badge/PyPI-v0.1.0-orange.svg?style=for-the-badge&logo=pypi)](https://pypi.org/project/llm-chain-forge/)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Community-7289DA?style=for-the-badge&logo=discord)](https://discord.gg/llm-chain-forge)
-[![CI](https://img.shields.io/github/actions/workflow/status/yourusername/llm-chain-forge/ci.yml?style=for-the-badge&label=CI)](https://github.com/yourusername/llm-chain-forge/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/Martian172/llm-chain-forge/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/Martian172/llm-chain-forge/actions/workflows/ci.yml)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge)](https://github.com/psf/black)
 
 **A lightweight yet powerful Python framework for building, testing, and optimizing LLM prompt chains with built-in evaluation, intelligent caching, and a stunning web playground.**
@@ -77,14 +75,14 @@
 ### Installation
 
 ```bash
-pip install llm-chain-forge
+pip install "llm-chain-forge @ git+https://github.com/Martian172/llm-chain-forge.git"
 
 # With all providers
-pip install llm-chain-forge[all]
+pip install "llm-chain-forge[all] @ git+https://github.com/Martian172/llm-chain-forge.git"
 
-# With specific provider
-pip install llm-chain-forge[openai]
-pip install llm-chain-forge[anthropic]
+# With a specific provider
+pip install "llm-chain-forge[openai] @ git+https://github.com/Martian172/llm-chain-forge.git"
+pip install "llm-chain-forge[anthropic] @ git+https://github.com/Martian172/llm-chain-forge.git"
 ```
 
 ### Your First Chain (30 seconds)
@@ -453,7 +451,7 @@ forge new my-awesome-chain
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
-git clone https://github.com/yourusername/llm-chain-forge
+git clone https://github.com/Martian172/llm-chain-forge
 cd llm-chain-forge
 pip install -e ".[dev]"
 make test

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any
 from scipy import stats as scipy_stats
 
 from chainforge.evaluation.evaluator import Evaluator, TestCase, EvaluationReport

@@ -11,9 +11,8 @@ Supports GPT-3.5-turbo, GPT-4, GPT-4o, and GPT-4o-mini with:
 
 from __future__ import annotations
 
-import asyncio
 import time
-from typing import Any, AsyncIterator, Callable, Iterator, Optional
+from typing import Any, AsyncIterator, Iterator, Optional
 
 from chainforge.providers.base import BaseProvider, ProviderResponse, TokenUsage
 

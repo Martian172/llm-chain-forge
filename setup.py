@@ -29,12 +29,10 @@ setup(
     description="A lightweight yet powerful Python framework for building, testing, and optimizing LLM prompt chains",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/llm-chain-forge",
+    url="https://github.com/Martian172/llm-chain-forge",
     project_urls={
-        "Bug Tracker": "https://github.com/yourusername/llm-chain-forge/issues",
-        "Documentation": "https://llm-chain-forge.readthedocs.io",
-        "Discord": "https://discord.gg/llm-chain-forge",
-        "Changelog": "https://github.com/yourusername/llm-chain-forge/blob/main/CHANGELOG.md",
+        "Bug Tracker": "https://github.com/Martian172/llm-chain-forge/issues",
+        "Changelog": "https://github.com/Martian172/llm-chain-forge/blob/main/CHANGELOG.md",
     },
     packages=find_packages(exclude=["tests*", "examples*", "docs*"]),
     package_data={

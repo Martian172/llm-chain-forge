@@ -29,14 +29,14 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import HTMLResponse  # noqa: E402
+from pydantic import BaseModel, Field  # noqa: E402
 
-from chainforge.core.chain import Chain
-from chainforge.core.context import ChainContext
-from chainforge.core.link import Link
+from chainforge.core.chain import Chain  # noqa: E402
+from chainforge.core.context import ChainContext  # noqa: E402
+from chainforge.core.link import Link  # noqa: E402
 
 app = FastAPI(title="LLM Chain Forge Playground", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])

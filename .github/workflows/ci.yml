@@ -20,7 +20,7 @@ jobs:
     - name: Install
       run: |
         pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements.txt flake8
     - name: Lint
       run: flake8 chainforge --max-line-length=120 --count --statistics
     - name: Test
